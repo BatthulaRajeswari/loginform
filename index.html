@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Details + Guessing Game</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      min-width:100vw;
+      min-height: 100vh;
+      background-image: url('WhatsApp Image 2025-07-26 at 10.50.33 AM.jpeg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center top;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      padding-left: 40px;
+    }
+    
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 10; left: 10;
+      width: 0%;
+      height: 100%;
+      background-color: rgba(243, 235, 245, 0.473);
+      z-index: -1;
+    }
+
+    .container {
+      background-color: hsl(324, 14%, 93%);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      z-index: 2;
+      margin-top: 80px;
+    }
+
+    .step {
+      display: none;
+      flex-direction: column;
+    }
+    .step.active {
+      display: flex;
+    }
+
+    input, select, button {
+      padding: 12px;
+      font-size: 1rem;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 100%;
+    }
+
+    button {
+      background-color: #6a5acd;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #483d8b;
+    }
+
+    .progress {
+      height: 10px;
+      background: #ddd;
+      margin-bottom: 20px;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #6a5acd;
+      transition: width 0.3s ease-in-out;
+    }
+
+    #game, #result {
+      display: none;
+      margin-top: 30px;
+    }
+
+    /* Top-right Scale and Characters */
+    .scale-wrapper {
+      position: fixed;
+      top: 80px;
+      right: 30px;
+      width: 600px;
+      z-index: 10;
+    }
+
+    .scale-track {
+      position: relative;
+      width: 100%;
+      height: 16px;
+      background-color: #999;
+      border-radius: 8px;
+      margin-bottom: 40px;
+      box-shadow: inset 0 0 8px #00000055;
+    }
+
+    .marker {
+      position: absolute;
+      top: 30px;
+      width: 150px;
+      height: 150px;
+      transform: translateX(-50%);
+      transition: left 0.4s ease;
+      pointer-events: none;
+    }
+
+    .bubu {
+      filter: drop-shadow(0 0 10px navy);
+    }
+
+    .dudu {
+      filter: drop-shadow(0 0 10px crimson);
+    }
+    
+  </style>
+</head>
+<body>
+ 
+  <div class="container">
+    <h2>👋 Match your vibe with computer</h2>
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+    <form id="multiStepForm" onsubmit="return false;">
+      <div class="step active">
+        <label>👤 What's your name?</label>
+        <input type="text" name="name" required />
+      </div>
+      <div class="step">
+        <label>📧 What's your email?</label>
+        <input type="email" name="email" required />
+      </div>
+      <div class="step">
+        <label>🦸‍♂️ Who's your favorite subject?</label>
+        <input type="text" name="subject" required />
+      </div>
+      <div class="step">
+        <label>📱 Contact number</label>
+        <input type="tel" name="phone" required />
+      </div>
+      <div class="step">
+        <label for="gender">🚻 Gender:</label>
+        <select id="gender" name="gender" required>
+          <option value="">--Select--</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="step">
+        <label for="dob">📅 Date of Birth:</label>
+        <input type="date" id="dob" name="dob" required />
+      </div>
+      <div class="step">
+        <label>🏫 What's your college name?</label>
+        <input type="text" name="college" required />
+      </div>
+      <button type="button" id="nextBtn">Next ➡️</button>
+    </form>
+
+    <div id="result">
+      <h3>🎉 Thanks for the details!</h3>
+      <p>Ready for a quick game?</p>
+      <button onclick="startGame()">🎮 Start Number Game</button>
+    </div>
+   
+    <div id="game">
+      <h3>🎲 Guess the number (1–100)</h3>
+      <input type="number" id="guessInput" min="1" max="100" />
+      <button onclick="checkGuess()">Submit</button>
+      <p id="gameMsg"></p>
+      <p>📊 Attempts used: <strong id="attemptCount">0</strong></p>
+      <button onclick="restartGame()">🔁 Play Again</button>
+    </div>
+  </div>
+
+  <!-- Horizontal Scale with Characters -->
+  <div class="scale-wrapper" id="scaleWrapper" style="display:none;">
+    <div class="scale-track" id="scaleTrack"></div>
+    <img src="WhatsApp Image 2025-07-26 at 9.45.43 AM.jpeg" alt="Bubu" class="marker bubu" id="bubuMarker" />
+    <img src="WhatsApp Image 2025-07-26 at 9.52.50 AM.jpeg" alt="Dudu" class="marker dudu" id="duduMarker" />
+    <!-- Congratulation Image Hidden by Default -->
+    <img src="WhatsApp Image 2025-07-26 at 11.36.02 AM.jpeg" alt="Congrats" class="marker dudu" id="congratsImage" style="display:none;" />
+  </div>
+
+<script>
+  const steps = document.querySelectorAll('.step');
+  const nextBtn = document.getElementById('nextBtn');
+  const progressBar = document.getElementById('progressBar');
+  const form = document.getElementById('multiStepForm');
+  const result = document.getElementById('result');
+  let currentStep = 0;
+
+  nextBtn.addEventListener('click', () => {
+    const currentField = steps[currentStep].querySelector('input, select');
+    if (!currentField || !currentField.checkValidity()) {
+      currentField?.reportValidity();
+      return;
+    }
+    steps[currentStep].classList.remove('active');
+    currentStep++;
+    if (currentStep < steps.length) {
+      steps[currentStep].classList.add('active');
+      progressBar.style.width = `${(currentStep / steps.length) * 100}%`;
+    } else {
+      progressBar.style.width = '100%';
+      form.style.display = 'none';
+      result.style.display = 'block';
+    }
+  });
+
+  let targetNumber, attemptsUsed;
+
+  function startGame() {
+    targetNumber = Math.floor(Math.random() * 100) + 1;
+    attemptsUsed = 0;
+    document.getElementById('guessInput').disabled = false;
+    document.getElementById('guessInput').value = "";
+    document.getElementById('attemptCount').textContent = attemptsUsed;
+    document.getElementById('gameMsg').textContent = "";
+    document.getElementById('result').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+
+    const wrapper = document.getElementById('scaleWrapper');
+    const bubu = document.getElementById('bubuMarker');
+    const dudu = document.getElementById('duduMarker');
+    const congrats = document.getElementById('congratsImage');
+
+    wrapper.style.display = 'block';
+    congrats.style.display = 'none';  // hide congrats initially
+
+    bubu.style.display = 'block';
+    dudu.style.display = 'block';
+
+    bubu.style.left = `${mapValueToScale(targetNumber)}px`;
+    dudu.style.left = `${mapValueToScale(1)}px`;
+  }
+
+  function checkGuess() {
+    const guess = parseInt(document.getElementById('guessInput').value);
+    const msg = document.getElementById('gameMsg');
+    const countDisplay = document.getElementById('attemptCount');
+    const dudu = document.getElementById('duduMarker');
+    const bubu = document.getElementById('bubuMarker');
+    const congrats = document.getElementById('congratsImage');
+
+    if (isNaN(guess) || guess < 1 || guess > 100) {
+      msg.textContent = "⚠️ Enter a number between 1 and 100!";
+      return;
+    }
+
+    attemptsUsed++;
+    countDisplay.textContent = attemptsUsed;
+
+    dudu.style.left = `${mapValueToScale(guess)}px`;
+
+    if (guess === targetNumber) {
+      msg.textContent = `🎉 Correct! You guessed it in ${attemptsUsed} tries!`;
+      document.getElementById('guessInput').disabled = true;
+
+      // Hide dudu and bubu
+      dudu.style.display = 'none';
+      bubu.style.display = 'none';
+
+      // Show congrats image at target position
+      congrats.style.display = 'block';
+      congrats.style.left = `${mapValueToScale(targetNumber)}px`;
+      
+    } else {
+      msg.textContent = guess > targetNumber ? "⬇️ Too high!" : "⬆️ Too low!";
+
+      // Show dudu and bubu, hide congrats
+      congrats.style.display = 'none';
+      dudu.style.display = 'block';
+      bubu.style.display = 'block';
+    }
+  }
+
+  function restartGame() {
+    startGame();
+    document.getElementById('guessInput').value = '';
+  }
+
+  function mapValueToScale(value) {
+    const track = document.getElementById('scaleTrack');
+    const trackWidth = track.offsetWidth;
+    return ((value - 1) / 99) * trackWidth;
+  }
+</script>
+
+</body>
+</html>
